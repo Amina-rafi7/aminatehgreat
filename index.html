@@ -3,123 +3,118 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Statistical Data Analysis Tool</title>
+    <title>Statistical Analysis Tool</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body {
-            font-family: sans-serif;
-            margin: 20px;
+            font-family: Arial, sans-serif;
+            background: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+            text-align: center;
         }
-        #dataInput {
+        .container {
+            max-width: 800px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+        }
+        textarea {
             width: 100%;
             height: 100px;
             margin-bottom: 10px;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
         }
-        #results {
+        button {
+            background: #28a745;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        button:hover {
+            background: #218838;
+        }
+        .results {
             margin-top: 20px;
+            text-align: left;
         }
         .canvas-container {
-            width: 600px;
+            width: 100%;
             height: 400px;
         }
     </style>
 </head>
 <body>
-    <h1>Statistical Data Analysis Tool</h1>
-    <label for="dataInput">Enter Data (comma-separated, two lines for covariance):</label><br>
-    <textarea id="dataInput"></textarea><br>
-    <button onclick="analyzeData()">Analyze Data</button>
-    <div id="results">
-        <h2>Results</h2>
-        <p>Mean: <span id="mean"></span></p>
-        <p>Median: <span id="median"></span></p>
-        <p>Mode: <span id="mode"></span></p>
-        <p>Standard Deviation: <span id="stdDev"></span></p>
-        <p>Variance: <span id="variance"></span></p>
-        <p>Covariance: <span id="covariance"></span></p>
-        <p>RMS: <span id="rms"></span></p>
-        <p>Geometric Mean: <span id="geometricMean"></span></p>
-        <p>Harmonic Mean: <span id="harmonicMean"></span></p>
-        <div class="canvas-container">
-            <canvas id="histogramChart"></canvas>
+    <div class="container">
+        <h1>Statistical Analysis Tool</h1>
+        <label for="dataInput">Enter Data (comma-separated or CSV):</label>
+        <textarea id="dataInput"></textarea>
+        <button onclick="analyzeData()">Analyze Data</button>
+        
+        <div class="results" id="results">
+            <h2>Results</h2>
+            <p>Mean: <span id="mean"></span></p>
+            <p>Median: <span id="median"></span></p>
+            <p>Standard Deviation: <span id="stdDev"></span></p>
+            <div class="canvas-container">
+                <canvas id="histogramChart"></canvas>
+            </div>
         </div>
     </div>
+    
     <script>
         function analyzeData() {
             let inputData = document.getElementById("dataInput").value;
-            let data = parseData(inputData);
-            let data2 = [];
-            if (inputData.includes("\n")) {
-                let lines = inputData.split("\n");
-                if (lines.length >= 2) {
-                    data = lines[0].split(",").map(Number);
-                    data2 = lines[1].split(",").map(Number);
-                    if (data.length !== data2.length) {
-                        alert("Two variable data must have equal lengths");
-                        return;
-                    }
-                }
+            let data = inputData.split(',').map(Number).filter(n => !isNaN(n));
+            if (data.length === 0) {
+                alert("Please enter valid numerical data.");
+                return;
             }
-            document.getElementById("mean").textContent = calculateMean(data).toFixed(2);
-            document.getElementById("median").textContent = calculateMedian(data).toFixed(2);
-            document.getElementById("mode").textContent = calculateMode(data).join(", ");
-            document.getElementById("stdDev").textContent = calculateStandardDeviation(data).toFixed(2);
-            document.getElementById("variance").textContent = calculateVariance(data).toFixed(2);
-            document.getElementById("covariance").textContent = data2.length ? calculateCovariance(data, data2).toFixed(2) : "N/A";
-            document.getElementById("rms").textContent = calculateRMS(data).toFixed(2);
-            document.getElementById("geometricMean").textContent = calculateGeometricMean(data).toFixed(2);
-            document.getElementById("harmonicMean").textContent = calculateHarmonicMean(data).toFixed(2);
+            document.getElementById("mean").textContent = calculateMean(data);
+            document.getElementById("median").textContent = calculateMedian(data);
+            document.getElementById("stdDev").textContent = calculateStdDev(data);
             createHistogram(data, "histogramChart");
         }
-        function parseData(input) {
-            return input.split(/,|\n/).map(Number).filter(v => !isNaN(v));
-        }
         function calculateMean(data) {
-            return data.reduce((a, b) => a + b, 0) / data.length;
+            return (data.reduce((a, b) => a + b, 0) / data.length).toFixed(2);
         }
         function calculateMedian(data) {
-            let sorted = [...data].sort((a, b) => a - b);
+            let sorted = data.slice().sort((a, b) => a - b);
             let mid = Math.floor(sorted.length / 2);
-            return sorted.length % 2 === 0 ? (sorted[mid - 1] + sorted[mid]) / 2 : sorted[mid];
+            return sorted.length % 2 ? sorted[mid] : ((sorted[mid - 1] + sorted[mid]) / 2).toFixed(2);
         }
-        function calculateMode(data) {
-            let counts = {};
-            data.forEach(num => counts[num] = (counts[num] || 0) + 1);
-            let maxCount = Math.max(...Object.values(counts));
-            return Object.keys(counts).filter(key => counts[key] === maxCount).map(Number);
-        }
-        function calculateStandardDeviation(data) {
+        function calculateStdDev(data) {
             let mean = calculateMean(data);
-            let variance = data.reduce((sum, num) => sum + (num - mean) ** 2, 0) / data.length;
-            return Math.sqrt(variance);
-        }
-        function calculateVariance(data) {
-            let mean = calculateMean(data);
-            return data.reduce((sum, num) => sum + (num - mean) ** 2, 0) / data.length;
-        }
-        function calculateCovariance(x, y) {
-            let meanX = calculateMean(x), meanY = calculateMean(y);
-            return x.reduce((sum, xi, i) => sum + (xi - meanX) * (y[i] - meanY), 0) / (x.length - 1);
-        }
-        function calculateRMS(data) {
-            return Math.sqrt(data.reduce((sum, num) => sum + num ** 2, 0) / data.length);
-        }
-        function calculateGeometricMean(data) {
-            return Math.pow(data.reduce((prod, num) => prod * num, 1), 1 / data.length);
-        }
-        function calculateHarmonicMean(data) {
-            return data.length / data.reduce((sum, num) => sum + 1 / num, 0);
+            let variance = data.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / data.length;
+            return Math.sqrt(variance).toFixed(2);
         }
         function createHistogram(data, canvasId) {
-            let counts = {};
-            data.forEach(num => counts[num] = (counts[num] || 0) + 1);
-            let labels = Object.keys(counts).sort((a, b) => a - b);
-            let values = labels.map(label => counts[label]);
             let ctx = document.getElementById(canvasId).getContext('2d');
             new Chart(ctx, {
                 type: 'bar',
-                data: { labels: labels, datasets: [{ label: 'Histogram', data: values, backgroundColor: 'rgba(54, 162, 235, 0.5)', borderColor: 'rgba(54, 162, 235, 1)', borderWidth: 1 }] },
-                options: { scales: { y: { beginAtZero: true } } }
+                data: {
+                    labels: data.map((_, i) => i + 1),
+                    datasets: [{
+                        label: 'Histogram',
+                        data: data,
+                        backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
             });
         }
     </script>
