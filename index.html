@@ -291,3 +291,129 @@
     </script>
 </body>
 </html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Statistical Calculations</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            margin: 20px;
+        }
+        #dataInput {
+            width: 100%;
+            height: 100px;
+            margin-bottom: 10px;
+        }
+        #results {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Statistical Calculations</h1>
+
+    <label for="dataInput">Enter Data (comma-separated, two lines for covariance):</label><br>
+    <textarea id="dataInput"></textarea><br>
+    <button onclick="calculateStatistics()">Calculate Statistics</button>
+
+    <div id="results">
+        <h2>Results</h2>
+        <p>Covariance: <span id="covariance"></span></p>
+        <p>RMS: <span id="rms"></span></p>
+        <p>Geometric Mean: <span id="geometricMean"></span></p>
+        <p>Harmonic Mean: <span id="harmonicMean"></span></p>
+    </div>
+
+    <script>
+        function calculateStatistics() {
+            let inputData = document.getElementById("dataInput").value;
+            let data = parseData(inputData);
+            let data2 = [];
+
+            if (data.length === 0) {
+                alert("Please enter valid numerical data.");
+                return;
+            }
+
+            if(inputData.includes("\n")){
+                let splitData = inputData.split("\n");
+                let firstLine = splitData[0].split(",");
+                let secondLine = splitData[1].split(",");
+                if(firstLine.length === secondLine.length){
+                    data = firstLine.map(Number);
+                    data2 = secondLine.map(Number);
+                } else {
+                    alert('Two variable data must have equal lengths');
+                    return;
+                }
+            }
+
+            if(data2.length > 0){
+                document.getElementById("covariance").textContent = calculateCovariance(data, data2).toFixed(2);
+            } else {
+                document.getElementById("covariance").textContent = "N/A";
+            }
+
+            document.getElementById("rms").textContent = calculateRMS(data).toFixed(2);
+            document.getElementById("geometricMean").textContent = calculateGeometricMean(data).toFixed(2);
+            document.getElementById("harmonicMean").textContent = calculateHarmonicMean(data).toFixed(2);
+        }
+
+        function parseData(input) {
+            let values = input.split(/,|\n/).map(value => parseFloat(value.trim()));
+            return values.filter(value => !isNaN(value));
+        }
+
+        function calculateCovariance(x, y) {
+            const n = x.length;
+            const meanX = calculateMean(x);
+            const meanY = calculateMean(y);
+            let sum = 0;
+            for (let i = 0; i < n; i++) {
+                sum += (x[i] - meanX) * (y[i] - meanY);
+            }
+            return sum / (n - 1);
+        }
+
+        function calculateRMS(data) {
+            const n = data.length;
+            let sum = 0;
+            for (let i = 0; i < n; i++) {
+                sum += Math.pow(data[i], 2);
+            }
+            return Math.sqrt(sum / n);
+        }
+
+        function calculateGeometricMean(data) {
+            let product = 1;
+            for (let i = 0; i < data.length; i++) {
+                if (data[i] <= 0) {
+                    return "Geometric mean is undefined for non-positive values.";
+                }
+                product *= data[i];
+            }
+            return Math.pow(product, 1 / data.length);
+        }
+
+        function calculateHarmonicMean(data) {
+            let sum = 0;
+            for (let i = 0; i < data.length; i++) {
+                if (data[i] === 0) {
+                    return "Harmonic mean is undefined for zero values.";
+                }
+                sum += 1 / data[i];
+            }
+            return data.length / sum;
+        }
+
+        function calculateMean(data) {
+            let sum = data.reduce((a, b) => a + b, 0);
+            return sum / data.length;
+        }
+
+    </script>
+</body>
+</html>
