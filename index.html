@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Statistical Data Analysis Tool</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: sans-serif;
+            margin: 20px;
+        }
+        #dataInput {
+            width: 100%;
+            height: 100px;
+            margin-bottom: 10px;
+        }
+        #results {
+            margin-top: 20px;
+        }
+        .canvas-container{
+            width: 600px;
+            height: 400px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Statistical Data Analysis Tool</h1>
+
+    <label for="dataInput">Enter Data (comma-separated or CSV):</label><br>
+    <textarea id="dataInput"></textarea><br>
+    <button onclick="analyzeData()">Analyze Data</button>
+
+    <div id="results">
+        <h2>Results</h2>
+        <p>Mean: <span id="mean"></span></p>
+        <p>Median: <span id="median"></span></p>
+        <p>Mode: <span id="mode"></span></p>
+        <p>Standard Deviation: <span id="stdDev"></span></p>
+        <p>Variance: <span id="variance"></span></p>
+        <p>Min: <span id="min"></span></p>
+        <p>Max: <span id="max"></span></p>
+        <p>Q1: <span id="q1"></span></p>
+        <p>Q2(Median): <span id="q2"></span></p>
+        <p>Q3: <span id="q3"></span></p>
+        <p>Range: <span id="range"></span></p>
+        <p>Pearson Correlation: <span id="pearson"></span></p>
+        <div class="canvas-container">
+            <canvas id="histogramChart"></canvas>
+        </div>
+        <div class="canvas-container">
+            <canvas id="boxPlotChart"></canvas>
+        </div>
+        <div class="canvas-container">
+            <canvas id="scatterPlotChart"></canvas>
+        </div>
+    </div>
+
+    <script>
+        function analyzeData() {
+            let inputData = document.getElementById("dataInput").value;
+            let data = parseData(inputData);
+            let data2 = []; //For two variable analysis.
+
+            if (data.length === 0) {
+                alert("Please enter valid numerical data.");
+                return;
+            }
+
+            if(inputData.includes("\n")){ //assume two variables if new lines are present.
+                let splitData = inputData.split("\n");
+                let firstLine = splitData[0].split(",");
+                let secondLine = splitData[1].split(",");
+                if(firstLine.length === secondLine.length){
+                    data = firstLine.map(Number);
+                    data2 = secondLine.map(Number);
+                }
+                else {
+                    alert('Two variable data must have equal lengths');
+                    return;
+                }
+            }
+
+            // Calculate statistics
+            let mean = calculateMean(data);
+            let median = calculateMedian(data);
+            let mode = calculateMode(data);
+            let stdDev = calculateStandardDeviation(data);
+            let variance = calculateVariance(data);
+            let min = Math.min(...data);
+            let max = Math.max(...data);
+            let quartiles = calculateQuartiles(data);
+            let range = max - min;
+            let pearson = data2.length > 0 ? calculatePearson(data, data2) : "N/A";
+
+            // Display results
+            document.getElementById("mean").textContent = mean;
+            document.getElementById("median").textContent = median;
+            document.getElementById("mode").textContent = mode;
+            document.getElementById("stdDev").textContent = stdDev;
+            document.getElementById("variance").textContent = variance;
+            document.getElementById("min").textContent = min;
+            document.getElementById("max").textContent = max;
+            document.getElementById("q1").textContent = quartiles[0];
+            document.getElementById("q2").textContent = quartiles[1];
+            document.getElementById("q3").textContent = quartiles[2];
+            document.getElementById("range").textContent = range;
+            document.getElementById("pearson").textContent = pearson;
+
+            // Create visualizations
+            createHistogram(data, "histogramChart");
+            createBoxPlot(data, "boxPlotChart");
+            if(data2.length > 0) {
+                createScatterPlot(data, data2, "scatterPlotChart");
+            } else{
+                document.getElementById('scatterPlotChart').style.display = 'none';
+            }
+        }
+
+        // Helper functions (parseData, calculateMean, etc.)
+        function parseData(input) {
+            let values = input.split(/,|\n/).map(value => parseFloat(value.trim()));
+            return values.filter(value => !isNaN(value));
+        }
+
+        function calculateMean(data) {
+            let sum = data.reduce((a, b) => a + b, 0);
+            return sum / data.length;
+        }
+
+        function calculateMedian(data) {
+            let sortedData = data.slice().sort((a, b) => a - b);
+            let middle = Math.floor(sortedData.length / 2);
+            if (sortedData.length % 2 === 0) {
+                return (sortedData[middle - 1] + sortedData[middle]) / 2;
+            } else {
+                return sortedData[middle];
+            }
+        }
+
+        function calculateMode(data) {
+            let counts = {};
+            data.forEach(value => counts[value] = (counts[value] || 0) + 1);
+            let modes = Object.keys(counts).filter(key => counts[key] === Math.max(...Object.values(counts)));
+            return modes.map(Number);
+        }
+
+        function calculateStandardDeviation(data) {
+            let mean = calculateMean(data);
+            let squaredDifferences = data.map(value => Math.pow(value - mean, 2));
+            let variance = squaredDifferences.reduce((a, b) => a + b, 0) / (data.length - 1);
+            return Math.sqrt(variance);
+        }
+
+        function calculateVariance(data) {
+            let mean = calculateMean(data);
+            let squaredDifferences = data.map(value => Math.pow(value - mean, 2));
+            return squaredDifferences.reduce((a, b) => a + b, 0) / (data.length - 1);
+        }
+
+        function calculateQuartiles(data) {
+            let sortedData = data.slice().sort((a, b) => a - b);
+            let q1 = calculatePercentile(sortedData, 25);
+            let q2 = calculatePercentile(sortedData, 50);
+            let q3 = calculatePercentile(sortedData, 75);
+            return [q1, q2, q3];
+        }
+
+        function calculatePercentile(data, percentile) {
+            let index = (percentile / 100) * (data.length - 1);
+            if (Math.floor(index) === index) {
+                return data[index];
+            } else {
+                let i = Math.floor(index);
+                let fraction = index - i;
+                return data[i] + (data[i + 1] - data[i]) * fraction;
+            }
+        }
+
+        function calculatePearson(x, y) {
+            let n = x.length;
+            let sumX = 0, sumY = 0, sumXY = 0;
+            let sumX2 = 0, sumY2 = 0;
+
+            for (let i = 0; i < n; i++) {
+                sumX += x[i];
+                sumY += y[i];
+                sumXY += x[i] * y[i];
+                sumX2 += x[i] * x[i];
+                sumY2 += y[i] * y[i];
+            }
+
+            let numerator = n * sumXY - sumX * sumY;
+            let denominator = Math.sqrt((n * sumX2 - sumX * sumX) * (n * sumY2 - sumY * sumY));
+
+            if (denominator === 0) return 0;
+            return numerator / denominator;
+        }
+
+    function createHistogram(data, canvasId) {
+            let counts = {};
+            data.forEach(value => {
+                counts[Math.round(value)] = (counts[Math.round(value)] || 0) + 1;
+            });
+
+            let labels = Object.keys(counts).sort((a, b) => a - b);
+            let values = labels.map(label => counts[label]);
+
+            let ctx = document.getElementById(canvasId).getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Histogram',
+                        data: values,
+                        backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        function createBoxPlot(data, canvasId) {
+            let quartiles = calculateQuartiles(data);
+            let min = Math.min(...data);
+            let max = Math.max(...data);
+
+            let ctx = document.getElementById(canvasId).getContext('2d');
+            new Chart(ctx, {
+                type: 'boxplot',
+                data: {
+                    labels: ['Box Plot'],
+                    datasets: [{
+                        label: 'Data',
+                        data: [data],
+                        backgroundColor: 'rgba(255, 99, 132, 0.5)',
+                        borderColor: 'rgba(255, 99, 132, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: false
+                        }
+                    }
+                }
+            });
+        }
+
+        function createScatterPlot(x, y, canvasId) {
+            let dataPoints = x.map((value, index) => ({ x: value, y: y[index] }));
+
+            let ctx = document.getElementById(canvasId).getContext('2d');
+            new Chart(ctx, {
+                type: 'scatter',
+                data: {
+                    datasets: [{
+                        label: 'Scatter Plot',
+                        data: dataPoints,
+                        backgroundColor: 'rgba(75, 192, 192, 0.5)',
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    scales: {
+                        x: {
+                            type: 'linear',
+                            position: 'bottom'
+                        },
+                        y: {
+                            type: 'linear',
+                            position: 'left'
+                        }
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>
