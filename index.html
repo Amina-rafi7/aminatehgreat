@@ -8,39 +8,69 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body {
-            font-family: sans-serif;
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
             margin: 20px;
+            text-align: center;
         }
-        #dataInput {
+        .container {
+            background: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            margin: auto;
+        }
+        textarea {
             width: 100%;
-            height: 100px;
-            margin-bottom: 10px;
+            height: 80px;
+            margin: 10px 0;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            resize: none;
         }
-        #results {
+        button {
+            background-color: #007BFF;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .results {
+            text-align: left;
             margin-top: 20px;
         }
         .canvas-container {
-            width: 600px;
-            height: 400px;
+            width: 100%;
+            max-width: 500px;
+            margin: 20px auto;
         }
     </style>
 </head>
 <body>
-    <h1>Statistical Data Analysis Tool</h1>
-    <label for="dataInput">Enter Data (comma-separated, two lines for covariance):</label><br>
-    <textarea id="dataInput"></textarea><br>
-    <button onclick="analyzeData()">Analyze Data</button>
-    <div id="results">
-        <h2>Results</h2>
-        <p>Mean: <span id="mean"></span></p>
-        <p>Median: <span id="median"></span></p>
-        <p>Mode: <span id="mode"></span></p>
-        <p>Standard Deviation: <span id="stdDev"></span></p>
-        <p>Variance: <span id="variance"></span></p>
-        <p>Covariance: <span id="covariance"></span></p>
-        <p>RMS: <span id="rms"></span></p>
-        <p>Geometric Mean: <span id="geometricMean"></span></p>
-        <p>Harmonic Mean: <span id="harmonicMean"></span></p>
+    <div class="container">
+        <h1>Statistical Data Analysis</h1>
+        <label for="dataInput">Enter Data (comma-separated, two lines for covariance):</label>
+        <textarea id="dataInput"></textarea>
+        <button onclick="analyzeData()">Analyze Data</button>
+        <div class="results" id="results">
+            <h2>Results</h2>
+            <p><strong>Mean:</strong> <span id="mean"></span></p>
+            <p><strong>Median:</strong> <span id="median"></span></p>
+            <p><strong>Mode:</strong> <span id="mode"></span></p>
+            <p><strong>Standard Deviation:</strong> <span id="stdDev"></span></p>
+            <p><strong>Variance:</strong> <span id="variance"></span></p>
+            <p><strong>Covariance:</strong> <span id="covariance"></span></p>
+            <p><strong>RMS:</strong> <span id="rms"></span></p>
+            <p><strong>Geometric Mean:</strong> <span id="geometricMean"></span></p>
+            <p><strong>Harmonic Mean:</strong> <span id="harmonicMean"></span></p>
+        </div>
         <div class="canvas-container">
             <canvas id="histogramChart"></canvas>
         </div>
@@ -48,32 +78,16 @@
     <script>
         function analyzeData() {
             let inputData = document.getElementById("dataInput").value;
-            let data = parseData(inputData);
-            let data2 = [];
-            if (inputData.includes("\n")) {
-                let lines = inputData.split("\n");
-                if (lines.length >= 2) {
-                    data = lines[0].split(",").map(Number);
-                    data2 = lines[1].split(",").map(Number);
-                    if (data.length !== data2.length) {
-                        alert("Two variable data must have equal lengths");
-                        return;
-                    }
-                }
-            }
+            let data = inputData.split(/,|\n/).map(Number).filter(v => !isNaN(v));
             document.getElementById("mean").textContent = calculateMean(data).toFixed(2);
             document.getElementById("median").textContent = calculateMedian(data).toFixed(2);
             document.getElementById("mode").textContent = calculateMode(data).join(", ");
             document.getElementById("stdDev").textContent = calculateStandardDeviation(data).toFixed(2);
             document.getElementById("variance").textContent = calculateVariance(data).toFixed(2);
-            document.getElementById("covariance").textContent = data2.length ? calculateCovariance(data, data2).toFixed(2) : "N/A";
             document.getElementById("rms").textContent = calculateRMS(data).toFixed(2);
             document.getElementById("geometricMean").textContent = calculateGeometricMean(data).toFixed(2);
             document.getElementById("harmonicMean").textContent = calculateHarmonicMean(data).toFixed(2);
-            createHistogram(data, "histogramChart");
-        }
-        function parseData(input) {
-            return input.split(/,|\n/).map(Number).filter(v => !isNaN(v));
+            createHistogram(data);
         }
         function calculateMean(data) {
             return data.reduce((a, b) => a + b, 0) / data.length;
@@ -91,16 +105,12 @@
         }
         function calculateStandardDeviation(data) {
             let mean = calculateMean(data);
-            let variance = data.reduce((sum, num) => sum + (num - mean) ** 2, 0) / data.length;
+            let variance = calculateVariance(data);
             return Math.sqrt(variance);
         }
         function calculateVariance(data) {
             let mean = calculateMean(data);
             return data.reduce((sum, num) => sum + (num - mean) ** 2, 0) / data.length;
-        }
-        function calculateCovariance(x, y) {
-            let meanX = calculateMean(x), meanY = calculateMean(y);
-            return x.reduce((sum, xi, i) => sum + (xi - meanX) * (y[i] - meanY), 0) / (x.length - 1);
         }
         function calculateRMS(data) {
             return Math.sqrt(data.reduce((sum, num) => sum + num ** 2, 0) / data.length);
@@ -111,12 +121,12 @@
         function calculateHarmonicMean(data) {
             return data.length / data.reduce((sum, num) => sum + 1 / num, 0);
         }
-        function createHistogram(data, canvasId) {
+        function createHistogram(data) {
             let counts = {};
             data.forEach(num => counts[num] = (counts[num] || 0) + 1);
             let labels = Object.keys(counts).sort((a, b) => a - b);
             let values = labels.map(label => counts[label]);
-            let ctx = document.getElementById(canvasId).getContext('2d');
+            let ctx = document.getElementById("histogramChart").getContext('2d');
             new Chart(ctx, {
                 type: 'bar',
                 data: { labels: labels, datasets: [{ label: 'Histogram', data: values, backgroundColor: 'rgba(54, 162, 235, 0.5)', borderColor: 'rgba(54, 162, 235, 1)', borderWidth: 1 }] },
