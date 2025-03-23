@@ -3,145 +3,124 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Statistical Data Analysis Tool</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <title>Riemann Integral & Sum Calculator</title>
     <style>
         body {
             font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
             text-align: center;
-            margin: 20px;
+            margin: 0;
+            padding: 0;
+            background: url('https://source.unsplash.com/1600x900/?calculator,math') no-repeat center center fixed;
+            background-size: cover;
+            color: white;
         }
         .container {
-            max-width: 700px;
-            background: white;
+            max-width: 600px;
+            margin: 50px auto;
             padding: 20px;
-            margin: auto;
-            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
-            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.8);
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
         }
-        textarea {
+        h2 {
+            color: #f8d210;
+            font-size: 24px;
+        }
+        label {
+            display: block;
+            margin-top: 10px;
+            font-weight: bold;
+            color: #f3f3f3;
+        }
+        input {
             width: 100%;
-            height: 100px;
-            margin-bottom: 10px;
-            padding: 8px;
-            border: 1px solid #ccc;
+            padding: 10px;
+            margin-top: 5px;
+            border: 1px solid #f8d210;
             border-radius: 5px;
+            font-size: 16px;
+            background: rgba(255, 255, 255, 0.9);
         }
         button {
-            background: #28a745;
-            color: white;
-            padding: 10px 15px;
+            width: 100%;
+            padding: 12px;
+            margin-top: 15px;
+            background: #f8d210;
+            color: black;
             border: none;
             border-radius: 5px;
+            font-size: 18px;
             cursor: pointer;
+            font-weight: bold;
         }
         button:hover {
-            background: #218838;
+            background: #ffba08;
         }
-        .canvas-container {
-            width: 100%;
-            max-width: 600px;
-            margin: auto;
+        .result {
+            font-weight: bold;
+            margin-top: 20px;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 5px;
+            color: black;
+        }
+        .calculator-image {
+            width: 80px;
+            margin-bottom: 10px;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Statistical Data Analysis Tool</h1>
-        <label for="dataInput">Enter Data (comma-separated, two lines for covariance):</label><br>
-        <textarea id="dataInput"></textarea><br>
-        <button onclick="analyzeData()">Analyze Data</button>
-        <div id="results">
-            <h2>Results</h2>
-            <p>Mean: <span id="mean"></span></p>
-            <p>Median: <span id="median"></span></p>
-            <p>Mode: <span id="mode"></span></p>
-            <p>Standard Deviation: <span id="stdDev"></span></p>
-            <p>Variance: <span id="variance"></span></p>
-            <p>Covariance: <span id="covariance"></span></p>
-            <p>RMS: <span id="rms"></span></p>
-            <p>Geometric Mean: <span id="geometricMean"></span></p>
-            <p>Harmonic Mean: <span id="harmonicMean"></span></p>
-        </div>
-        <div class="canvas-container">
-            <canvas id="histogramChart"></canvas>
-        </div>
+        <img src="https://cdn-icons-png.flaticon.com/512/2702/2702066.png" class="calculator-image" alt="Calculator">
+        <h2>Riemann Integral & Sum Calculator</h2>
+        <label>Function f(x):</label>
+        <input type="text" id="functionInput" placeholder="Example: x*x">
+        <label>Interval [a, b]:</label>
+        <input type="number" id="a" placeholder="a">
+        <input type="number" id="b" placeholder="b">
+        <label>Number of Subintervals (n):</label>
+        <input type="number" id="n" placeholder="n">
+        <button onclick="calculate()">Calculate</button>
+        <div class="result" id="output"></div>
     </div>
+    
     <script>
-        function analyzeData() {
-            let inputData = document.getElementById("dataInput").value;
-            let data = parseData(inputData);
-            let data2 = [];
-            if (inputData.includes("\n")) {
-                let lines = inputData.split("\n");
-                if (lines.length >= 2) {
-                    data = lines[0].split(",").map(Number);
-                    data2 = lines[1].split(",").map(Number);
-                    if (data.length !== data2.length) {
-                        alert("Two variable data must have equal lengths");
-                        return;
-                    }
-                }
+        function f(x, expr) {
+            return new Function('x', `return ${expr};`)(x);
+        }
+        
+        function calculate() {
+            let expr = document.getElementById("functionInput").value;
+            let a = parseFloat(document.getElementById("a").value);
+            let b = parseFloat(document.getElementById("b").value);
+            let n = parseInt(document.getElementById("n").value);
+            
+            if (isNaN(a) || isNaN(b) || isNaN(n) || n <= 0) {
+                document.getElementById("output").innerHTML = "Please enter valid values for a, b, and n.";
+                return;
             }
-            document.getElementById("mean").textContent = calculateMean(data).toFixed(2);
-            document.getElementById("median").textContent = calculateMedian(data).toFixed(2);
-            document.getElementById("mode").textContent = calculateMode(data).join(", ");
-            document.getElementById("stdDev").textContent = calculateStandardDeviation(data).toFixed(2);
-            document.getElementById("variance").textContent = calculateVariance(data).toFixed(2);
-            document.getElementById("covariance").textContent = data2.length ? calculateCovariance(data, data2).toFixed(2) : "N/A";
-            document.getElementById("rms").textContent = calculateRMS(data).toFixed(2);
-            document.getElementById("geometricMean").textContent = calculateGeometricMean(data).toFixed(2);
-            document.getElementById("harmonicMean").textContent = calculateHarmonicMean(data).toFixed(2);
-            createHistogram(data, "histogramChart");
-        }
-        function parseData(input) {
-            return input.split(/,|\n/).map(Number).filter(v => !isNaN(v));
-        }
-        function calculateMean(data) {
-            return data.reduce((a, b) => a + b, 0) / data.length;
-        }
-        function calculateMedian(data) {
-            let sorted = [...data].sort((a, b) => a - b);
-            let mid = Math.floor(sorted.length / 2);
-            return sorted.length % 2 === 0 ? (sorted[mid - 1] + sorted[mid]) / 2 : sorted[mid];
-        }
-        function calculateMode(data) {
-            let counts = {};
-            data.forEach(num => counts[num] = (counts[num] || 0) + 1);
-            let maxCount = Math.max(...Object.values(counts));
-            return Object.keys(counts).filter(key => counts[key] === maxCount).map(Number);
-        }
-        function calculateStandardDeviation(data) {
-            let mean = calculateMean(data);
-            let variance = calculateVariance(data);
-            return Math.sqrt(variance);
-        }
-        function calculateVariance(data) {
-            let mean = calculateMean(data);
-            return data.reduce((sum, num) => sum + (num - mean) ** 2, 0) / data.length;
-        }
-        function calculateCovariance(x, y) {
-            let meanX = calculateMean(x), meanY = calculateMean(y);
-            return x.reduce((sum, xi, i) => sum + (xi - meanX) * (y[i] - meanY), 0) / (x.length - 1);
-        }
-        function calculateRMS(data) {
-            return Math.sqrt(data.reduce((sum, num) => sum + num ** 2, 0) / data.length);
-        }
-        function calculateGeometricMean(data) {
-            return Math.pow(data.reduce((prod, num) => prod * num, 1), 1 / data.length);
-        }
-        function calculateHarmonicMean(data) {
-            return data.length / data.reduce((sum, num) => sum + 1 / num, 0);
-        }
-        function createHistogram(data, canvasId) {
-            let counts = {};
-            data.forEach(num => counts[num] = (counts[num] || 0) + 1);
-            let labels = Object.keys(counts).sort((a, b) => a - b);
-            let values = labels.map(label => counts[label]);
-            let colors = labels.map(() => `hsl(${Math.random() * 360}, 70%, 60%)`);
-            let ctx = document.getElementById(canvasId).getContext('2d');
-            new Chart(ctx, { type: 'bar', data: { labels, datasets: [{ label: 'Histogram', data: values, backgroundColor: colors }] }, options: { scales: { y: { beginAtZero: true } } } });
+            
+            let dx = (b - a) / n;
+            let leftSum = 0, rightSum = 0, midSum = 0, trapSum = 0;
+            
+            for (let i = 0; i < n; i++) {
+                let xLeft = a + i * dx;
+                let xRight = a + (i + 1) * dx;
+                let xMid = (xLeft + xRight) / 2;
+                
+                leftSum += f(xLeft, expr) * dx;
+                rightSum += f(xRight, expr) * dx;
+                midSum += f(xMid, expr) * dx;
+                trapSum += (f(xLeft, expr) + f(xRight, expr)) * dx / 2;
+            }
+            
+            document.getElementById("output").innerHTML = `
+                Left Riemann Sum: ${leftSum.toFixed(5)} <br>
+                Right Riemann Sum: ${rightSum.toFixed(5)} <br>
+                Midpoint Riemann Sum: ${midSum.toFixed(5)} <br>
+                Trapezoidal Approximation: ${trapSum.toFixed(5)}
+            `;
         }
     </script>
 </body>
