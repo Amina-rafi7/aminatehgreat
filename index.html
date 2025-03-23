@@ -6,25 +6,38 @@
     <title>Riemann Integral & Sum Calculator</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Poppins', sans-serif;
             text-align: center;
             margin: 0;
             padding: 0;
-            background: url('https://source.unsplash.com/1600x900/?calculator,math') no-repeat center center fixed;
-            background-size: cover;
+            background: linear-gradient(to right, #1e3c72, #2a5298);
             color: white;
         }
         .container {
             max-width: 600px;
             margin: 50px auto;
             padding: 20px;
-            background: rgba(0, 0, 0, 0.8);
-            border-radius: 10px;
-            box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
+            background: rgba(0, 0, 0, 0.85);
+            border-radius: 15px;
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
+            position: relative;
+        }
+        .container::before {
+            content: '';
+            position: absolute;
+            top: -10px;
+            left: -10px;
+            right: -10px;
+            bottom: -10px;
+            background: linear-gradient(45deg, #ff9a9e, #fad0c4);
+            z-index: -1;
+            border-radius: 20px;
+            filter: blur(20px);
         }
         h2 {
             color: #f8d210;
-            font-size: 24px;
+            font-size: 26px;
+            margin-bottom: 15px;
         }
         label {
             display: block;
@@ -34,35 +47,39 @@
         }
         input {
             width: 100%;
-            padding: 10px;
+            padding: 12px;
             margin-top: 5px;
-            border: 1px solid #f8d210;
-            border-radius: 5px;
+            border: none;
+            border-radius: 8px;
             font-size: 16px;
             background: rgba(255, 255, 255, 0.9);
+            text-align: center;
         }
         button {
             width: 100%;
             padding: 12px;
             margin-top: 15px;
-            background: #f8d210;
-            color: black;
+            background: linear-gradient(to right, #ff9966, #ff5e62);
+            color: white;
             border: none;
-            border-radius: 5px;
+            border-radius: 8px;
             font-size: 18px;
             cursor: pointer;
             font-weight: bold;
+            transition: 0.3s;
         }
         button:hover {
-            background: #ffba08;
+            transform: scale(1.05);
+            background: linear-gradient(to right, #ff5e62, #ff9966);
         }
         .result {
             font-weight: bold;
             margin-top: 20px;
-            padding: 10px;
-            background: rgba(255, 255, 255, 0.9);
-            border-radius: 5px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 8px;
             color: black;
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
         }
         .calculator-image {
             width: 80px;
