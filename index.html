@@ -3,141 +3,147 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Riemann Integral & Sum Calculator</title>
+    <title>Statistical Data Analysis Tool</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body {
-            font-family: 'Poppins', sans-serif;
-            text-align: center;
+            font-family: Arial, sans-serif;
             margin: 0;
-            padding: 0;
-            background: linear-gradient(to right, #1e3c72, #2a5298);
-            color: white;
+            padding: 20px;
+            background-color: #f4f4f9;
+            text-align: center;
         }
         .container {
-            max-width: 600px;
-            margin: 50px auto;
+            max-width: 800px;
+            margin: auto;
             padding: 20px;
-            background: rgba(0, 0, 0, 0.85);
-            border-radius: 15px;
-            box-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
-            position: relative;
+            background: white;
+            box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
         }
-        .container::before {
-            content: '';
-            position: absolute;
-            top: -10px;
-            left: -10px;
-            right: -10px;
-            bottom: -10px;
-            background: linear-gradient(45deg, #ff9a9e, #fad0c4);
-            z-index: -1;
-            border-radius: 20px;
-            filter: blur(20px);
-        }
-        h2 {
-            color: #f8d210;
-            font-size: 26px;
-            margin-bottom: 15px;
-        }
-        label {
-            display: block;
-            margin-top: 10px;
-            font-weight: bold;
-            color: #f3f3f3;
-        }
-        input {
+        textarea {
             width: 100%;
-            padding: 12px;
-            margin-top: 5px;
-            border: none;
-            border-radius: 8px;
+            height: 80px;
+            margin: 10px 0;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
             font-size: 16px;
-            background: rgba(255, 255, 255, 0.9);
-            text-align: center;
         }
         button {
-            width: 100%;
-            padding: 12px;
-            margin-top: 15px;
-            background: linear-gradient(to right, #ff9966, #ff5e62);
+            background-color: #007bff;
             color: white;
+            padding: 12px;
             border: none;
-            border-radius: 8px;
-            font-size: 18px;
             cursor: pointer;
-            font-weight: bold;
+            border-radius: 5px;
+            font-size: 16px;
             transition: 0.3s;
         }
         button:hover {
-            transform: scale(1.05);
-            background: linear-gradient(to right, #ff5e62, #ff9966);
+            background-color: #0056b3;
         }
-        .result {
-            font-weight: bold;
-            margin-top: 20px;
-            padding: 15px;
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 8px;
-            color: black;
-            box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+        .results p {
+            font-size: 18px;
+            margin: 5px 0;
         }
-        .calculator-image {
-            width: 80px;
-            margin-bottom: 10px;
+        .canvas-container {
+            width: 100%;
+            max-width: 600px;
+            margin: 20px auto;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <img src="https://cdn-icons-png.flaticon.com/512/2702/2702066.png" class="calculator-image" alt="Calculator">
-        <h2>Riemann Integral & Sum Calculator</h2>
-        <label>Function f(x):</label>
-        <input type="text" id="functionInput" placeholder="Example: x*x">
-        <label>Interval [a, b]:</label>
-        <input type="number" id="a" placeholder="a">
-        <input type="number" id="b" placeholder="b">
-        <label>Number of Subintervals (n):</label>
-        <input type="number" id="n" placeholder="n">
-        <button onclick="calculate()">Calculate</button>
-        <div class="result" id="output"></div>
+        <h1>Statistical Data Analysis Tool</h1>
+        <p>Enter numbers separated by commas (two lines for covariance & scatter plot):</p>
+        <textarea id="dataInput"></textarea>
+        <button onclick="analyzeData()">Analyze Data</button>
+        
+        <div class="results">
+            <h2>Results</h2>
+            <p><strong>Mean:</strong> <span id="mean"></span></p>
+            <p><strong>Median:</strong> <span id="median"></span></p>
+            <p><strong>Mode:</strong> <span id="mode"></span></p>
+            <p><strong>Min:</strong> <span id="min"></span> | <strong>Max:</strong> <span id="max"></span> | <strong>Range:</strong> <span id="range"></span></p>
+            <p><strong>Standard Deviation:</strong> <span id="stdDev"></span></p>
+            <p><strong>Variance:</strong> <span id="variance"></span></p>
+            <p><strong>Covariance:</strong> <span id="covariance"></span></p>
+            <p><strong>Pearson Correlation:</strong> <span id="correlation"></span></p>
+        </div>
+        
+        <h2>Visualizations</h2>
+        <div class="canvas-container">
+            <canvas id="histogramChart"></canvas>
+        </div>
+        <div class="canvas-container">
+            <canvas id="scatterPlotChart"></canvas>
+        </div>
     </div>
     
     <script>
-        function f(x, expr) {
-            return new Function('x', `return ${expr};`)(x);
-        }
-        
-        function calculate() {
-            let expr = document.getElementById("functionInput").value;
-            let a = parseFloat(document.getElementById("a").value);
-            let b = parseFloat(document.getElementById("b").value);
-            let n = parseInt(document.getElementById("n").value);
+        function analyzeData() {
+            let inputData = document.getElementById("dataInput").value.trim();
+            let lines = inputData.split("\n").map(line => line.split(",").map(Number));
             
-            if (isNaN(a) || isNaN(b) || isNaN(n) || n <= 0) {
-                document.getElementById("output").innerHTML = "Please enter valid values for a, b, and n.";
+            if (lines.length < 1 || lines[0].some(isNaN)) {
+                alert("Invalid data. Please enter comma-separated numbers.");
                 return;
             }
-            
-            let dx = (b - a) / n;
-            let leftSum = 0, rightSum = 0, midSum = 0, trapSum = 0;
-            
-            for (let i = 0; i < n; i++) {
-                let xLeft = a + i * dx;
-                let xRight = a + (i + 1) * dx;
-                let xMid = (xLeft + xRight) / 2;
-                
-                leftSum += f(xLeft, expr) * dx;
-                rightSum += f(xRight, expr) * dx;
-                midSum += f(xMid, expr) * dx;
-                trapSum += (f(xLeft, expr) + f(xRight, expr)) * dx / 2;
-            }
-            
-            document.getElementById("output").innerHTML = `
-                Left Riemann Sum: ${leftSum.toFixed(5)} <br>
-                Right Riemann Sum: ${rightSum.toFixed(5)} <br>
-                Midpoint Riemann Sum: ${midSum.toFixed(5)} <br>
-                Trapezoidal Approximation: ${trapSum.toFixed(5)}
-            `;
+
+            let data = lines[0];
+            let data2 = lines.length > 1 && lines[1].length === data.length ? lines[1] : [];
+
+            document.getElementById("mean").textContent = calculateMean(data).toFixed(2);
+            document.getElementById("median").textContent = calculateMedian(data).toFixed(2);
+            document.getElementById("mode").textContent = calculateMode(data).join(", ");
+            document.getElementById("min").textContent = Math.min(...data);
+            document.getElementById("max").textContent = Math.max(...data);
+            document.getElementById("range").textContent = (Math.max(...data) - Math.min(...data)).toFixed(2);
+            document.getElementById("stdDev").textContent = calculateStandardDeviation(data).toFixed(2);
+            document.getElementById("variance").textContent = calculateVariance(data).toFixed(2);
+            document.getElementById("covariance").textContent = data2.length ? calculateCovariance(data, data2).toFixed(2) : "N/A";
+            document.getElementById("correlation").textContent = data2.length ? calculatePearsonCorrelation(data, data2).toFixed(2) : "N/A";
+
+            createHistogram(data, "histogramChart");
+            if (data2.length) createScatterPlot(data, data2, "scatterPlotChart");
+        }
+
+        function calculateMean(data) {
+            return data.reduce((sum, val) => sum + val, 0) / data.length;
+        }
+        
+        function calculateMedian(data) {
+            let sorted = [...data].sort((a, b) => a - b);
+            let mid = Math.floor(sorted.length / 2);
+            return sorted.length % 2 !== 0 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+        }
+        
+        function calculateMode(data) {
+            let freq = {};
+            data.forEach(num => freq[num] = (freq[num] || 0) + 1);
+            let maxFreq = Math.max(...Object.values(freq));
+            return Object.keys(freq).filter(num => freq[num] === maxFreq).map(Number);
+        }
+        
+        function calculateStandardDeviation(data) {
+            let mean = calculateMean(data);
+            return Math.sqrt(data.reduce((sum, val) => sum + (val - mean) ** 2, 0) / data.length);
+        }
+        
+        function calculateVariance(data) {
+            return calculateStandardDeviation(data) ** 2;
+        }
+
+        function calculateCovariance(x, y) {
+            let meanX = calculateMean(x), meanY = calculateMean(y);
+            return x.reduce((sum, xi, i) => sum + (xi - meanX) * (y[i] - meanY), 0) / x.length;
+        }
+
+        function calculatePearsonCorrelation(x, y) {
+            let cov = calculateCovariance(x, y);
+            return cov / (calculateStandardDeviation(x) * calculateStandardDeviation(y));
         }
     </script>
 </body>
